@@ -12,11 +12,6 @@ app = Flask(__name__)
 app.response_class = UTF8Response
 chat_history = []
 
-# 간단한 검색 문구 삽입 (시뮬레이션용)
-def search_web(query):
-    encoded = urllib.parse.quote(query)
-    return f"“{query}”에 대한 정보를 정리하고 있어요..."
-
 def jason_bot():
     try:
         response = client.chat.completions.create(
@@ -26,24 +21,27 @@ def jason_bot():
                     "role": "system",
                     "content": (
                         "너는 '미스터 제이슨'이라는 AI 챗봇이다. "
-                        "성격은 지혜롭고 신뢰감 있으며, 현명한 조언을 해주는 따뜻한 남성이다.\n"
-                        "반드시 순수한 한국어만 사용하고, 외국어 단어, 특수문자, 이모티콘은 절대 포함하지 않는다.\n"
-                        "사용자의 질문에 대해 정확하고 명료하게 답변하며, 품위 있는 어조로 짧은 문단으로 전달한다."
+                        "성격은 신뢰감 있고 지혜로운 남성이다. "
+                        "사용자의 말투, 어투, 질문에서 의도를 읽고 문맥을 반영하여 대화형으로 응답한다. "
+                        "질문이 의미 불분명할 경우 '무슨 말씀이신지 다시 한 번 말씀해주시겠어요?'라고 답하고, "
+                        "자판 오류로 보이는 입력은 한글로 추정하여 대응한다. "
+                        "모든 응답은 반드시 100% 한국어로만 작성하고, 이모티콘·기호·외국어 단어는 사용하지 않는다. "
+                        "답변은 짧은 단답이 아니라, 질문자의 의도를 이해하고 설명을 덧붙여 자연스럽게 이어지도록 한다."
                     )
                 }
             ] + chat_history,
-            temperature=0.7
+            temperature=0.8
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"⚠️ 오류: {str(e)}"
+        return f"⚠️ 오류 발생: {str(e)}"
 
 @app.route("/", methods=["GET", "POST"])
 def home():
     if request.method == "POST":
         user_input = request.form["user_input"]
         chat_history.append({"role": "user", "content": user_input})
-        chat_history.append({"role": "assistant", "content": search_web(user_input)})
+
         bot_reply = jason_bot()
         chat_history.append({"role": "assistant", "content": bot_reply})
 
@@ -57,67 +55,60 @@ html_template = '''
   <title>미스터 제이슨</title>
   <style>
     body {
-      background: url('https://i.imgur.com/x8KqOgH.jpg') no-repeat center center fixed;
-      background-size: cover;
+      background-color: #ffffff;
       font-family: 'Nanum Gothic', sans-serif;
-      color: #f3f3f3;
+      color: #222;
       padding: 40px;
     }
     .container {
-      background-color: rgba(30, 20, 10, 0.88);
+      background-color: #f7f7f7;
       padding: 30px;
       border-radius: 10px;
       max-width: 800px;
       margin: auto;
-      box-shadow: 0 0 20px #000;
+      box-shadow: 0 0 10px #ccc;
     }
     .header {
       font-size: 28px;
       font-weight: bold;
-      color: #c49a6c;
+      color: #5a3724;
       margin-bottom: 20px;
     }
     input {
       width: 70%%;
       padding: 10px;
-      background: #2d1f1f;
-      color: #fff;
-      border: none;
+      background: #eee;
+      color: #000;
+      border: 1px solid #ccc;
       font-size: 16px;
     }
-    input:focus { outline: none; }
     button {
       padding: 10px 20px;
-      background: #6d4c41;
+      background: #5e3b1f;
       color: white;
       border: none;
       font-weight: bold;
     }
     .chat { margin-top: 30px; }
     .message { margin-bottom: 20px; }
-    .user { color: #a0cfff; }
-    .bot { color: #c49a6c; }
-    .bot::before {
-      content: url('https://i.imgur.com/g4x2zxB.png'); /* 루팡 느낌 이미지 넣기 */
-      margin-right: 8px;
-      vertical-align: middle;
-    }
+    .user { color: #1565c0; }
+    .bot { color: #5e3b1f; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">🕵️ 미스터 제이슨</div>
+    <div class="header">미스터 제이슨</div>
     <form method="post" autocomplete="off">
-      <input name="user_input" placeholder="궁금한 걸 물어보세요..." required>
-      <button type="submit">묻기</button>
+      <input name="user_input" placeholder="무엇이든 물어보세요..." required>
+      <button type="submit">질문</button>
     </form>
     <div class="chat">
     {% for msg in history %}
       <div class="message">
         {% if msg.role == 'user' %}
-          <strong class="user">🔎 진실을 원하는 자:</strong> {{ msg.content }}
+          <strong class="user">진실을 원하는 자:</strong> {{ msg.content }}
         {% else %}
-          <strong class="bot">🧠 미스터 제이슨:</strong> {{ msg.content }}
+          <strong class="bot">미스터 제이슨:</strong> {{ msg.content }}
         {% endif %}
       </div>
     {% endfor %}
