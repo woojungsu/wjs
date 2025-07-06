@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: mr-jason
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: "python mr_jason.py"
